@@ -83,7 +83,7 @@ public:
 
     vector<Document> FindTopDocuments(const string& raw_query) const
     {
-        const Words_plus_and_minus query_words = ParseQuery(raw_query);
+        const WordsPlusMinus query_words = ParseQuery(raw_query);
 
         auto matched_documents = FindAllDocuments(query_words);
 
@@ -100,19 +100,11 @@ public:
     }
 
 private:
-    struct Words_plus_and_minus
-    {
-    public:
-        set<string> words_plus;
-        set<string> words_minus;
-    };
-
     map<string, map<int, double>> word_to_document_freqs_;
 
-    int document_count_ = 0;
-
-
     set<string> stop_words_;
+
+    int document_count_ = 0;
 
     bool IsStopWord(const string& word) const
     {
@@ -132,25 +124,64 @@ private:
         return words;
     }
 
-    Words_plus_and_minus ParseQuery(const string& text) const
+    struct QueryWord        // Дополнительная struct 
     {
-        Words_plus_and_minus query_words;
-        for (string& word : SplitIntoWordsNoStop(text))
+        string data;
+        bool is_minus;
+        bool is_stop;
+    };
+
+    QueryWord ParseQueryWord(string text) const     // Дополнительный метод
+    {
+        bool is_minus = false;
+
+        if (text[0] == '-')
         {
-            if (word[0] != '-')
-            {
-                query_words.words_plus.insert(word);
-            }
-            else
-            {
-                word.erase(word.begin());
-                query_words.words_minus.insert(word);
-            }
+            is_minus = true;
+            text = text.substr(1);
         }
-        return query_words;
+        return
+        {
+            text,
+            is_minus,
+            IsStopWord(text)
+        };
     }
 
-    vector<Document> FindAllDocuments(const Words_plus_and_minus& query_words) const
+    struct WordsPlusMinus    // Внес привки -> изменил название struct Words_plus_and_minus на WordsPlusMinus (откорректировал во всем файле изменение наименования struct)
+    {
+    public:
+        set<string> words_plus;
+        set<string> words_minus;
+    };
+
+    WordsPlusMinus ParseQuery(const string& text) const     // Корректировка метода
+    {
+        WordsPlusMinus word_plus_minus;
+        for (const string& word : SplitIntoWords(text))
+        {
+            const QueryWord query_word = ParseQueryWord(word);
+            if (!query_word.is_stop)
+            {
+                if (query_word.is_minus)
+                {
+                    word_plus_minus.words_minus.insert(query_word.data);
+                }
+                else
+                {
+                    word_plus_minus.words_plus.insert(query_word.data);
+                }
+            }
+        }
+        return word_plus_minus;
+    }
+
+    double InverseDocumentFrequency(const string& word) const               // Вынес отдельно функцию подсчета IDF
+    {
+        return log((document_count_ * 1.0) / static_cast <double> (word_to_document_freqs_.at(word).size()));   // Заменил c cast приведение на static_cast
+    }
+
+    vector<Document> FindAllDocuments(const WordsPlusMinus& query_words) const
     {
         map <int, double> document_to_relevance;
         vector<Document> matched_documents;
@@ -158,17 +189,10 @@ private:
         {
             if (word_to_document_freqs_.count(word) != 0)
             {
-                double IDF = log((document_count_ * 1.0) / (double)word_to_document_freqs_.at(word).size());
+                double IDF = InverseDocumentFrequency(word);                // Использую функцию для разгрузки FindAllDocuments
                 for (const auto& id : word_to_document_freqs_.at(word))
                 {
-                    if (document_to_relevance.count(id.first) == 0)
-                    {
-                        document_to_relevance.emplace(id.first, id.second * IDF);
-                    }
-                    else
-                    {
-                        document_to_relevance.at(id.first) += (id.second * IDF);
-                    }
+                    document_to_relevance[id.first] += (id.second * IDF);   // Сократил ветвление if-else 
                 }
             }
         }
