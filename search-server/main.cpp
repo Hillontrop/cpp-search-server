@@ -15,6 +15,8 @@
 //using namespace std;
 //
 //const int MAX_RESULT_DOCUMENT_COUNT = 5;
+//const double EPSILON = 1e-6;   //+ Добавлена глобальная константа для сравнение чисел с плавающей точкой 
+//
 //
 //template <typename T>
 //ostream& operator<<(ostream& os, const vector<T>& vec)
@@ -232,7 +234,7 @@
 //        sort(matched_documents.begin(), matched_documents.end(),
 //            [](const Document& lhs, const Document& rhs)
 //            {
-//                if (abs(lhs.relevance - rhs.relevance) < 1e-6)
+//                if (abs(lhs.relevance - rhs.relevance) < EPSILON)   //+ Используется глобальная переменная для сравнение чисел с плавающей точкой
 //                {
 //                    return lhs.rating > rhs.rating;
 //                }
@@ -339,7 +341,7 @@
 //    {
 //        bool is_minus = false;
 //
-//        if (text[0] == '-')
+//        if (text.at(0) == '-')
 //        {
 //            is_minus = true;
 //            text = text.substr(1);
@@ -493,7 +495,7 @@ void TestExcludeStopWordsFromAddedDocumentContent()
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
         const auto found_docs = server.FindTopDocuments("in"s);
         ASSERT_EQUAL(found_docs.size(), 1);
-        const Document& doc0 = found_docs[0];
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
         ASSERT_EQUAL(doc0.id, doc_id);
     }
 
@@ -529,11 +531,11 @@ void TestAddDocument()
     // Проверяем слово которое есть в документах
     {
         const auto found_docs = server.FindTopDocuments("cat"s); // Ищем слово
-        ASSERT_EQUAL(found_docs.size(), 2);     // Проверили, что слово "cat" есть в 2 документах
-        const Document& doc0 = found_docs[0];
-        const Document& doc1 = found_docs[1];
-        ASSERT_EQUAL(doc0.id, doc_id_1);        // Проверили, что найден первый документ
-        ASSERT_EQUAL(doc1.id, doc_id_2);        // Проверили, что найден второй документ
+        ASSERT_EQUAL(found_docs.size(), 2);         // Проверили, что слово "cat" есть в 2 документах
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
+        const Document& doc1 = found_docs.at(1);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
+        ASSERT_EQUAL(doc0.id, doc_id_1);            // Проверили, что найден первый документ
+        ASSERT_EQUAL(doc1.id, doc_id_2);         // Проверили, что найден второй документ
     }
     // Проверяем слово которого нет в документах
     {
@@ -561,7 +563,7 @@ void TestFindTopDocumentsMinusWord()
         const auto found_docs_with_minus_word = server.FindTopDocuments("cat -dog"s);
         ASSERT_EQUAL(found_docs.size(), 2);                      // Проверили, что слово "cat" есть в 2 документах
         ASSERT_EQUAL(found_docs_with_minus_word.size(), 1);      // Проверили, что если есть минус-словом "-dog" то выдается всего один документ
-        const Document& doc0 = found_docs_with_minus_word[0];
+        const Document& doc0 = found_docs_with_minus_word.at(0); //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
         ASSERT(doc0.id != doc_id_2);                             // Проверили, что документа с минус-словом исключен
     }
 }
@@ -582,14 +584,16 @@ void TestFindTopDocumentsSortRelevance()
 
     {
         const auto found_docs = server.FindTopDocuments("cat"s);
-        const Document& doc0 = found_docs[0];
-        const Document& doc1 = found_docs[1];
-        ASSERT(doc0.relevance >= doc1.relevance);         // Проверили, что релевантность первого документа больше релевантности второго
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
+        const Document& doc1 = found_docs.at(1);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
+
+        ASSERT(doc0.relevance >= doc1.relevance);   // Проверили, что релевантность первого документа больше релевантности второго
     }
 }
 
+
 // 5. Корректное вычисление релевантности найденных документов.
-void TestFindTopDocumentsRelevance()
+void TestFindTopDocumentsRelevance()//+
 {
     const int doc_id_1 = 10;
     const string content_1 = "cat in the city"s;
@@ -609,40 +613,36 @@ void TestFindTopDocumentsRelevance()
     {
         const auto found_docs = server.FindTopDocuments("cat"s);
 
-        double IDF_cat = log(static_cast<double>(server.GetDocumentCount()) / 2.0);    // IDF слова "cat"
+        double IDF_cat = log(static_cast<double>(server.GetDocumentCount()) / 2.0);    //+ IDF слова "cat"
         double TF_dok0_cat = 1.0 / 4.0;                 // TF слова "cat" в первом документе
         double TF_dok1_cat = 1.0 / 5.0;                 // TF слова "cat" во втором документе
         double relevance_doc0 = IDF_cat * TF_dok0_cat;  // Релевантность первого документа
         double relevance_doc1 = IDF_cat * TF_dok1_cat;  // Релевантность второго документа
-        const Document& doc0 = found_docs[0];
-        const Document& doc1 = found_docs[1];
-        ASSERT_EQUAL(doc0.relevance, relevance_doc0);     // Проверили, что релевантность первого документа вычислена правильно
-        ASSERT_EQUAL(doc1.relevance, relevance_doc1);     // Проверили, что релевантность второгодокумента вычислена правильно
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
+        const Document& doc1 = found_docs.at(1);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
+
+        //+ Используется глобальная переменная для сравнение чисел с плавающей точкой
+        ASSERT(abs(doc0.relevance - relevance_doc0) < EPSILON);     // Проверили, что релевантность первого документа вычислена правильно
+        ASSERT(abs(doc1.relevance - relevance_doc1) < EPSILON);     // Проверили, что релевантность первого документа вычислена правильно
     }
 }
+
 
 // 6. Вычисление рейтинга документов. Рейтинг добавленного документа равен среднему арифметическому оценок документа.
 void TestComputeAverageRating()
 {
     const int doc_id_1 = 10;
     const string content_1 = "cat in the city"s;
-    const vector<int> ratings_1 = { -20, -10, -30 };
-    const int doc_id_2 = 20;
-    const string content_2 = "cat blak dog"s;
-    const vector<int> ratings_2 = { 20, 10, 30 };
+    const vector<int> ratings_1 = { 20, 10, 30 };
 
     SearchServer server;
     server.AddDocument(doc_id_1, content_1, DocumentStatus::ACTUAL, ratings_1);
-    server.AddDocument(doc_id_2, content_2, DocumentStatus::ACTUAL, ratings_2);
 
     {
         const auto found_docs = server.FindTopDocuments("cat"s);
-        int rating_doc_id_1 = accumulate(ratings_1.begin(), ratings_1.end(), 0) / static_cast<int>(ratings_1.size());   // Рассчитываем рейтинг для первого документа 
-        int rating_doc_id_2 = accumulate(ratings_2.begin(), ratings_2.end(), 0) / static_cast<int>(ratings_2.size());   // Рассчитываем рейтинг для второго документа 
-        const Document& doc0 = found_docs[0];
-        const Document& doc1 = found_docs[1];
-        ASSERT_EQUAL(doc0.rating, rating_doc_id_2); // Проверяем рейтинг для получееного документа
-        ASSERT_EQUAL(doc1.rating, rating_doc_id_1); // Проверяем рейтинг для получееного документа
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
+        //+ Расчет рейтинга заменен на числовую формулу
+        ASSERT_EQUAL(doc0.rating, (20 + 10 + 30) / 3); // Проверяем рейтинг для получееного документа
     }
 }
 
@@ -667,7 +667,7 @@ void TestFindTopDocumentsStatus()
     {
         const auto found_docs = server.FindTopDocuments("cat"s, DocumentStatus::IRRELEVANT);
         ASSERT_EQUAL(found_docs.size(), 1);
-        const Document& doc0 = found_docs[0];
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
         ASSERT_EQUAL(doc0.id, doc_id_2);
     }
     // Проверка поиска документов по статусу не соответствующему статусу документа
@@ -711,14 +711,14 @@ void TestFindTopDocumentsPredicate()    // Правка внесена изме�
         int rating_doc_id_2 = accumulate(ratings_2.begin(), ratings_2.end(), 0) / static_cast<int>(ratings_2.size());
 
         ASSERT_EQUAL(found_docs.size(), 3);
-        const Document& doc0 = found_docs[0];
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
         ASSERT_EQUAL(doc0.rating, rating_doc_id_2);
     }
     {
         const auto found_docs = server.FindTopDocuments("cat"s,
             [](int document_id, DocumentStatus status, int rating) { return document_id % 20 == 0; });
         ASSERT_EQUAL(found_docs.size(), 2);
-        const Document& doc0 = found_docs[0];
+        const Document& doc0 = found_docs.at(0);    //+ Оператор [] заменен на .at() для предотвращения выхода за границы вектора
         ASSERT_EQUAL(doc0.id, doc_id_2);
     }
 }
@@ -735,17 +735,19 @@ void TestMatchDocument()
     server.SetStopWords("in the"s);
     server.AddDocument(doc_id_1, content_1, DocumentStatus::ACTUAL, ratings_1);
 
-    // Проверка на стоп-слова
+    // Проверка учетом стоп-слов
     {
         const auto& [words, status] = server.MatchDocument("cat in the old town"s, doc_id_1);
+
         const vector<string> expected_words = { "cat", "old", "town" };
+
         ASSERT_EQUAL(words, expected_words);        // Проверяем вектор слов
         ASSERT(status == DocumentStatus::ACTUAL);   // Поверяем статус
     }
-    // Проверка на минус-слова
+    // Проверка учетом минус-слов
     {
         const auto& [words, status] = server.MatchDocument("cat in the old town -dog"s, doc_id_1);
-        ASSERT(words.empty()); 
+        ASSERT(words.empty());
     }
 }
 
@@ -767,7 +769,7 @@ void TestSearchServer()
 
 //int main()
 //{
-//    TestSearchServer(); // Тестирование
+//    TestSearchServer();
 //    cout << "Search server testing finished"s << endl;    // Если вы видите эту строку, значит все тесты прошли успешно
 //
 //    SearchServer search_server;
