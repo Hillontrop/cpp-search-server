@@ -11,7 +11,6 @@
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
-#include<optional>
 
 using namespace std;
 
@@ -192,19 +191,16 @@ vector<int> ReadLineWithRatings()
 
 struct Document
 {
-    Document()
+    Document() : id{ 0 }, relevance{ 0.0 }, rating{ 0 }    //+ Конструктор изменен на более лаконичный
     {
-        this->id = 0;
-        this->relevance = 0.0;
-        this->rating = 0;
     }
     Document(int id_, double relevance_, int rating_)
     {
-        this->id = id_;
-        this->relevance = relevance_;
-        this->rating = rating_;
+        id = id_;                   //+ Убран избыточный this->
+        relevance = relevance_;     //+ Убран избыточный this->
+        rating = rating_;           //+ Убран избыточный this->
     }
-        
+
     int id;
     double relevance;
     int rating;
@@ -221,19 +217,6 @@ enum class DocumentStatus
 class SearchServer
 {
 public:
-
-    explicit SearchServer(const string& stop_words_text)
-    {
-        for (const string& word : SplitIntoWords(stop_words_text))
-        {
-            if (!IsValidWord(word))
-            {
-                throw invalid_argument("unacceptable symbols in stop words");
-            }
-            stop_words_.insert(word);
-        }
-    }
-
     template <typename StringCollection>
     explicit SearchServer(const StringCollection& stop_words)
     {
@@ -241,7 +224,7 @@ public:
         {
             if (!IsValidWord(word))
             {
-                throw invalid_argument("unacceptable symbols in stop words");
+                throw invalid_argument("invalid symbols in stop-word -> "s + word);
             }
             if (stop_words_.count(word) == 0)
             {
@@ -249,6 +232,11 @@ public:
             }
         }
     }
+
+    explicit SearchServer(const string& stop_words_text) : SearchServer(SplitIntoWords(stop_words_text))    //+ Делегированиев другой конструктор
+    {
+    }
+
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings)
     {
@@ -261,20 +249,14 @@ public:
             throw invalid_argument("id already exists");
         }
         const vector<string> words = SplitIntoWordsNoStop(document);
-        for (const string& word : words)
-        {
-            if (!SearchServer::IsValidWord(word))
-            {
-                throw invalid_argument("unacceptable symbols");
-            };
-        }
-        const double TF = 1.0 / static_cast<double>(words.size());
+        const double t_f = 1.0 / static_cast<double>(words.size());  //+ Выполнена замена TF на t_f
 
         for (const string& word : words)
         {
-            word_to_document_freqs_[word][document_id] += TF;
+            word_to_document_freqs_[word][document_id] += t_f;
         }
         documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
+        order_of_adding_documents.push_back(document_id);       //+ Добавление в vector<int> для сохранения порядка добавляемых документов
     }
 
     template <typename DocumentPredicate>
@@ -317,14 +299,9 @@ public:
         return static_cast <int> (documents_.size());
     }
 
-    int GetDocumentId(int index) const
+    int GetDocumentId(int index) const   //+ Метод исправлен. Теперь возвращать id документа добавленного на сервер под номером "index"
     {
-        if (index > SearchServer::GetDocumentCount() || index < 0)
-        {
-            throw out_of_range("id of the passed document is out of range");
-        }
-        auto it = documents_.find(index);
-        return  it->first;
+        return order_of_adding_documents.at(--index);
     }
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const
@@ -355,7 +332,7 @@ public:
             }
         }
         sort(begin(words), end(words), [](const string& str_1, const string& str_2) {return str_1 < str_2;});
-        return tuple(words, documents_.at(document_id).status);  
+        return tuple(words, documents_.at(document_id).status);
     }
 
 private:
@@ -372,6 +349,8 @@ private:
 
     map<int, DocumentData> documents_;
 
+    vector<int> order_of_adding_documents;      //+ Порядок добавления документов
+
     bool IsStopWord(const string& word) const
     {
         return stop_words_.count(word) > 0;
@@ -382,6 +361,10 @@ private:
         vector<string> words;
         for (const string& word : SplitIntoWords(text))
         {
+            if (!IsValidWord(word))     //+ Вынесено из AddDocument
+            {
+                throw invalid_argument("invalid symbols in word -> "s + word);
+            }
             if (!IsStopWord(word))
             {
                 words.push_back(word);
@@ -398,41 +381,40 @@ private:
     };
 
     QueryWord ParseQueryWord(string word) const
-    {   
-        if (IsValidWord(word))
+    {
+        if (!IsValidWord(word))     //+ Убрано вложеное ветвление
         {
-            bool is_minus = false;
-
-            if (word.at(0) == '-')
-            {
-                if (word.size() == 1)
-                {
-                    throw invalid_argument("no text after - in the query");
-                }
-                if (word.at(1) == '-')
-                {
-                    throw invalid_argument("more than one minus before minus-word in the query");
-                }
-
-                is_minus = true;
-                word = word.substr(1);
-            }
-            const QueryWord query_word = { word, is_minus, IsStopWord(word) };
-            return query_word;
+            throw invalid_argument("invalid characters in query word -> " + word);
         }
-        throw invalid_argument("unacceptable symbols in the query");
+        bool is_minus = false;
+
+        if (word.at(0) == '-')
+        {
+            if (word.size() == 1)
+            {
+                throw invalid_argument("no text after - in the query");
+            }
+            if (word.at(1) == '-')
+            {
+                throw invalid_argument("more than one minus before minus-word in the query");
+            }
+
+            is_minus = true;
+            word = word.substr(1);
+        }
+        const QueryWord query_word = { word, is_minus, IsStopWord(word) };
+        return query_word;
     }
 
-    struct WordsPlusMinus
-    {
-    public:
+    struct Query            //+ WordsPlusMinus заменен на Query
+    {                       //+ Убрано public:
         set<string> words_plus;
         set<string> words_minus;
     };
 
-    WordsPlusMinus ParseQuery(const string& text) const
+    Query ParseQuery(const string& text) const
     {
-        WordsPlusMinus word_plus_minus;
+        Query word_plus_minus;
         for (const string& word : SplitIntoWords(text))
         {
             const auto query_word = ParseQueryWord(word);
@@ -457,7 +439,7 @@ private:
     }
 
     template <typename DocumentPredicate>
-    vector<Document> FindAllDocuments(const WordsPlusMinus& query, DocumentPredicate document_predicate) const
+    vector<Document> FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const
     {
         map<int, double> document_to_relevance;
         for (const string& word : query.words_plus)
@@ -476,7 +458,6 @@ private:
                 }
             }
         }
-
         for (const string& word : query.words_minus)
         {
             if (word_to_document_freqs_.count(word) == 0)
@@ -488,7 +469,6 @@ private:
                 document_to_relevance.erase(document_id);
             }
         }
-
         vector<Document> matched_documents;
         for (const auto [document_id, relevance] : document_to_relevance)
         {
