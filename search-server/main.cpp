@@ -194,13 +194,9 @@ struct Document
     Document() : id{ 0 }, relevance{ 0.0 }, rating{ 0 }    //+ Конструктор изменен на более лаконичный
     {
     }
-    Document(int id_, double relevance_, int rating_)
+    Document(int id, double relevance, int rating) :id{ id }, relevance{ relevance }, rating{ rating }    //++ Конструктор изменен на более лаконичный
     {
-        id = id_;                   //+ Убран избыточный this->
-        relevance = relevance_;     //+ Убран избыточный this->
-        rating = rating_;           //+ Убран избыточный this->
     }
-
     int id;
     double relevance;
     int rating;
@@ -301,7 +297,7 @@ public:
 
     int GetDocumentId(int index) const   //+ Метод исправлен. Теперь возвращать id документа добавленного на сервер под номером "index"
     {
-        return order_of_adding_documents.at(--index);
+        return order_of_adding_documents.at(index); //++ Теперь при GetDocumentId(10) выдает 11 документ
     }
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const
@@ -390,17 +386,16 @@ private:
 
         if (word.at(0) == '-')
         {
-            if (word.size() == 1)
+            word = word.substr(1);  //++ Удалили минус в начале
+            if (word.empty())       //++ Валидацию на пустоту
             {
                 throw invalid_argument("no text after - in the query");
             }
-            if (word.at(1) == '-')
+            if (word[0] == '-')     //++ Изменен (.at) на оператор []
             {
                 throw invalid_argument("more than one minus before minus-word in the query");
             }
-
             is_minus = true;
-            word = word.substr(1);
         }
         const QueryWord query_word = { word, is_minus, IsStopWord(word) };
         return query_word;
