@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include"iterator_range.h"
+#include "iterator_range.h" // + Добавлен пробел после слова include
 
 template <typename Iterator>
 class Paginator

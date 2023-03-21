@@ -2,16 +2,12 @@
 #include <string>
 
 #include "document.h"
-#include "iterator_range.h"
 #include "paginator.h"
 #include "request_queue.h"
 #include "search_server.h"
-#include "string_processing.h"
 #include "const.h"
-#include "read_input_functions.h"
+#include "output_statements.h"
 #include "test_example_functions.h"
-
-
 
 using namespace std;
 

@@ -12,17 +12,8 @@ class RequestQueue
 public:
     explicit RequestQueue(const SearchServer& search_server);
 
-    template <typename DocumentPredicate>
-    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate)
-    {
-        requests_.push_back({ raw_query , IsEmpty(search_server_.FindTopDocuments(raw_query,document_predicate)) });
-
-        if (static_cast<size_t>(requests_.size()) > min_in_day_)
-        {
-            requests_.pop_front();
-        }
-        return search_server_.FindTopDocuments(raw_query, document_predicate);
-    }
+    template <typename DocumentPredicate>       // + Ўаблонный метод AddFindRequest вынесен за пределы класса (строки 35-45)
+    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate);
 
     std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentStatus status);
     std::vector<Document> AddFindRequest(const std::string& raw_query);
@@ -40,3 +31,15 @@ private:
     bool IsEmpty(const std::vector<Document>& documents);
     const SearchServer& search_server_;
 };
+
+template <typename DocumentPredicate>
+std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate)
+{
+    requests_.push_back({ raw_query , RequestQueue::IsEmpty(search_server_.FindTopDocuments(raw_query,document_predicate)) });
+
+    if (static_cast<size_t>(requests_.size()) > min_in_day_)
+    {
+        requests_.pop_front();
+    }
+    return search_server_.FindTopDocuments(raw_query, document_predicate);
+}

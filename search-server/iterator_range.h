@@ -20,6 +20,7 @@ public:
         return size_;
     }
 private:
-    Iterator begin_, end_;
+    Iterator begin_;    // + ќбновлено объ€вдение переменных, теперь кажда€ на своей строке.
+    Iterator end_;
     size_t size_;
 };
