@@ -17,21 +17,28 @@
 class SearchServer
 {
 public:
-    template <typename StringCollection>       // + Шаблонный конструктор вынесен за пределы класса (строки 80-94)
+    template <typename StringCollection>
     explicit SearchServer(const StringCollection& stop_words);
 
     explicit SearchServer(const std::string& stop_words_text);
 
     void AddDocument(int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings);
 
-    template <typename DocumentPredicate>       // + Шаблонный метод FindTopDocuments вынесен за пределы класса (строки 96-119)
+    void RemoveDocument(int document_id);
+
+    template <typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const;
 
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status_filter) const;
     std::vector<Document> FindTopDocuments(const std::string& raw_query) const;
 
     int GetDocumentCount() const;
-    int GetDocumentId(int index) const;
+
+    std::vector<int>::const_iterator begin(); 
+
+    std::vector<int>::const_iterator end(); 
+
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
 
@@ -46,6 +53,7 @@ private:
     std::set<std::string> stop_words_;
     std::map<int, DocumentData> documents_;
     std::vector<int> order_of_adding_documents;
+    std::map<int, std::map<std::string, double>> document_word_frequency;
 
     bool IsStopWord(const std::string& word) const;
 
@@ -70,7 +78,7 @@ private:
 
     double InverseDocumentFrequency(const std::string& word) const;
 
-    template <typename DocumentPredicate>       // + Шаблонный метод FindAllDocuments вынесен за пределы класса (строки 121-163)
+    template <typename DocumentPredicate>
     std::vector<Document> FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const;
 
     static int ComputeAverageRating(const std::vector<int>& ratings);

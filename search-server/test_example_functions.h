@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
-#include "output_statements.h"
+#include "search_server.h"
+
 
 template <typename T, typename U>
 void AssertEqualImpl(const T& t, const U& u, const std::string& t_str, const std::string& u_str, const std::string& file,
@@ -43,3 +45,6 @@ void RunTestImpl(T& func, const std::string& func_name)
 }
 
 #define RUN_TEST(func) RunTestImpl((func), #func)
+
+
+void AddDocument(SearchServer& search_server,int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings);
