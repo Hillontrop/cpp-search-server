@@ -1,43 +1,26 @@
 #include "remove_duplicates.h"
 
-bool Duplicates(std::vector<std::string> first, std::vector<std::string> second)
-{
-    return first == second;
-}
-
-void RemoveDuplicates(SearchServer& search_server)
+void RemoveDuplicates(SearchServer& search_server)  // + Переработан
 {
     std::set<int> erase_id;
+    std::set<std::set<std::string>> words_sets;
+    std::set<std::string> set_words;
 
-    for (const int document_id_begin : search_server)
+    for (const int document_id : search_server)
     {
-        for (const int document_id_end : search_server)
+        for (const auto& [word, frequency] : search_server.GetWordFrequencies(document_id))
         {
-            if (document_id_begin >= document_id_end)
-            {
-                continue;
-            }
-
-            if (search_server.GetWordFrequencies(document_id_begin).size() == search_server.GetWordFrequencies(document_id_end).size())
-            {
-                std::vector<std::string> first;
-                first.reserve(search_server.GetWordFrequencies(document_id_begin).size());
-                for (const auto& [word, frequency] : search_server.GetWordFrequencies(document_id_begin))
-                {
-                    first.push_back(word);
-                }
-                std::vector<std::string> second;
-                second.reserve(search_server.GetWordFrequencies(document_id_end).size());
-                for (const auto& [word, frequency] : search_server.GetWordFrequencies(document_id_end))
-                {
-                    second.push_back(word);
-                }
-                if (Duplicates(first, second))
-                {
-                    erase_id.insert(document_id_end);
-                }
-            }
+            set_words.insert(word);
         }
+        if (words_sets.find(set_words) == words_sets.end())
+        {
+            words_sets.insert(set_words);
+        }
+        else
+        {
+            erase_id.insert(document_id);
+        }
+        set_words.clear();
     }
     for (const auto& erase : erase_id)
     {

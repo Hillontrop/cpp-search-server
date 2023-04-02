@@ -34,9 +34,9 @@ public:
 
     int GetDocumentCount() const;
 
-    std::vector<int>::const_iterator begin(); 
+    std::set<int>::const_iterator begin();      // + Переработано
 
-    std::vector<int>::const_iterator end(); 
+    std::set<int>::const_iterator end();     // + Переработано
 
     const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
@@ -52,7 +52,7 @@ private:
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
     std::set<std::string> stop_words_;
     std::map<int, DocumentData> documents_;
-    std::vector<int> order_of_adding_documents;
+    std::set<int> order_of_adding_documents;     // + Заменен vector на set
     std::map<int, std::map<std::string, double>> document_word_frequency;
 
     bool IsStopWord(const std::string& word) const;

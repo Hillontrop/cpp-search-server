@@ -24,19 +24,18 @@ void SearchServer::AddDocument(int document_id, const std::string& document, Doc
         word_to_document_freqs_[word][document_id] += t_f;
     }
     documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
-    order_of_adding_documents.push_back(document_id);
+    order_of_adding_documents.insert(document_id);       // + Переработано
 }
 
 void SearchServer::RemoveDocument(int document_id)
 {
     if (find(SearchServer::begin(), SearchServer::end(), document_id) != SearchServer::end())
     {
-        for (const auto& [word, freqs] : document_word_frequency.at(document_id))
+        for (const auto& [word, freqs] : document_word_frequency.at(document_id))   // + Добавлено удаление из контейнера слова которого нет в документах 
         {
-            word_to_document_freqs_.at(word).erase(document_id);
+            word_to_document_freqs_.at(word).size() == 1 ? word_to_document_freqs_.erase(word) : word_to_document_freqs_.at(word).erase(document_id);
         }
-        auto it1 = find(order_of_adding_documents.begin(), order_of_adding_documents.end(), document_id);    
-        order_of_adding_documents.erase(it1);
+        order_of_adding_documents.erase(document_id);   // + Изменено удаление
         document_word_frequency.erase(document_id);
         documents_.erase(document_id);
     }
@@ -57,19 +56,20 @@ int SearchServer::GetDocumentCount() const
     return static_cast <int> (documents_.size());
 }
 
-std::vector<int>::const_iterator SearchServer::begin()
+std::set<int>::const_iterator SearchServer::begin()     // + Переработано
 {
     return order_of_adding_documents.cbegin();
 }
 
-std::vector<int>::const_iterator SearchServer::end()
+std::set<int>::const_iterator SearchServer::end()       // + Переработано
 {
     return order_of_adding_documents.cend();
 }
 
+static const std::map<std::string, double> NO_DOCUMENT;     // + Добавлена статическая переменная
 const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const
 {
-    return document_word_frequency.at(document_id);
+    return document_word_frequency.at(document_id).empty() ? NO_DOCUMENT : document_word_frequency.at(document_id);     // + Переработано
 }
 
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(const std::string& raw_query, int document_id) const
