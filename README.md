@@ -5,7 +5,8 @@
 
 #include "search_server.h"
 
-int main() {
+int main()
+{
     // Создание экземпляра Search Server
     SearchServer server("stop_words.txt");
 
@@ -18,10 +19,10 @@ int main() {
     std::vector<Document> results = server.FindTopDocuments("document");
 
     // Вывод результатов
-    for (const Document& doc : results) {
+    for (const Document& doc : results)
+    {
         std::cout << "Document ID: " << doc.id << ", Rating: " << doc.rating << std::endl;
     }
-
     return 0;
 }
 
