@@ -19,7 +19,7 @@
 ## 3. Использование
 
 Пример использования Search Server:
-
+```cpp
     #include "search_server.h"
       
     int main()
@@ -42,6 +42,7 @@
         }
         return 0;
     }
+```
 
 ## 4.Описание методов
 ### - SearchServer::SearchServer(const std::string& stop_words_text)
