@@ -45,20 +45,15 @@
 ```
 
 ## 4.Описание методов
-### - SearchServer::SearchServer(const std::string& stop_words_text)
-Конструктор класса. Принимает коллекцию стоп-слов и инициализирует объект SearchServer.
+* **SearchServer::SearchServer _(const std::string& stop_words_text)_** - Конструктор класса. Принимает коллекцию стоп-слов и инициализирует объект SearchServer.
 
-### - SearchServer::AddDocument(int document_id, const std::string_view& document, DocumentStatus status, const std::vector<int>& ratings)
-Метод для добавления документа в поисковый индекс. Принимает идентификатор документа, текст документа, статус документа и рейтинги документа.
+* **SearchServer::AddDocument _(int document_id, const std::string_view& document, DocumentStatus status, const std::vector<int>& ratings)_** Метод для добавления документа в поисковый индекс. Принимает идентификатор документа, текст документа, статус документа и рейтинги документа.
 
-### - SearchServer::RemoveDocument(int document_id)
-Метод для удаления документа из поискового сервера. Принимает идентификатор документа.
+* **SearchServer::RemoveDocument _(int document_id)_** - Метод для удаления документа из поискового сервера. Принимает идентификатор документа.
 
-### - SearchServer::FindTopDocuments(const std::string_view& raw_query, DocumentStatus status_filter)
-Выполняет поиск документов по заданному запросу и возвращает список наиболее подходящих документов.
+* **SearchServer::FindTopDocuments _(const std::string_view& raw_query, DocumentStatus status_filter)_** - Выполняет поиск документов по заданному запросу и возвращает список наиболее подходящих документов.
 
-### - SearchServer::GetDocumentCount()
-Метод для получения количества документов в поисковом сервере.
+* **SearchServer::GetDocumentCount _()_** - Метод для получения количества документов в поисковом сервере.
 
 ## 5. Планы по доработке проекта
 1. **Документация и комментарии:**
