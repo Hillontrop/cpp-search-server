@@ -1,12 +1,11 @@
 #pragma once
 
+#include "string_processing.h"
+
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include "string_processing.h"
-
 
 std::string ReadLine();
 

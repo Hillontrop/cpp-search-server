@@ -15,50 +15,40 @@ enum class DocumentStatus
     REMOVED,
 };
 
-struct Document
-{
+struct Document {
     Document();
-    Document(int id, double relevance, int rating);
-    int id = 0;
-    double relevance = 0.0;
-    int rating = 0;
+    Document(const int id, const double relevance, const int rating);
+
+    int Id = 0;
+    double Relevance = 0.0;
+    int Rating = 0;
 };
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
-{
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
     os << "[";
-    for (const auto& v : vec)
-    {
-        if (v != vec[vec.size() - 1])
-        {
+    for (const auto& v : vec) {
+        if (v != vec[vec.size() - 1]) {
             os << v << ", ";
+            continue;
         }
-        else
-        {
-            os << v;
-        }
+        os << v;
     }
     os << "]";
     return os;
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::set<T>& se)
-{
+std::ostream& operator<<(std::ostream& os, const std::set<T>& se) {
     os << "{";
-    for (const auto& s : se)
-    {
+    for (const auto& s : se) {
         auto it = se.end();
         --it;
-        if (s != *it)
-        {
+        if (s != *it) {
             os << s << ", ";
+            continue;
         }
-        else
-        {
-            os << s;
-        }
+        os << s;
     }
     os << "}";
     return os;
@@ -68,18 +58,14 @@ template <typename T1, typename T2>
 std::ostream& operator<<(std::ostream& os, const std::map<T1, T2>& ma)
 {
     os << "{";
-    for (const auto& m : ma)
-    {
+    for (const auto& m : ma) {
         auto it = ma.end();
         --it;
-        if (m != *it)
-        {
+        if (m != *it) {
             os << m.first << ": " << m.second << ", ";
+            continue;
         }
-        else
-        {
-            os << m.first << ": " << m.second;
-        }
+        os << m.first << ": " << m.second;
     }
     os << "}";
     return os;

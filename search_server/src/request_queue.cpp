@@ -1,7 +1,7 @@
-#include "request_queue.h"
+#include "search_server/request_queue.h"
 
 
-RequestQueue::RequestQueue(const SearchServer& search_server) : search_server_(search_server)
+RequestQueue::RequestQueue(const SearchServer& search_server) : m_searchServer(search_server)
 {
 }
 
@@ -18,7 +18,7 @@ std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query)
 int RequestQueue::GetNoResultRequests() const
 {
     int rezult = 0;
-    for (const auto& [raw_query, empty] : requests_)
+    for (const auto& [raw_query, empty] : m_requests)
     {
         if (empty)
         {
